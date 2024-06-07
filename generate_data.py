@@ -149,6 +149,10 @@ def random_dict_item(dictionary):
     key = random.choice(list(dictionary.keys()))
     return key, dictionary[key]
 
+# Function to convert dates to strings
+def date_to_string(date):
+    return date.strftime('%Y-%m-%d')
+
 # Generate and save data in chunks
 json_file_path = "fake_mixed_documents_70k.json"
 csv_file_path = "fake_mixed_documents_70k.csv"
@@ -184,8 +188,8 @@ with open(json_file_path, 'w') as json_file:
                 "title": fake.sentence(nb_words=6),
                 "body": generate_large_text(),
                 "tags": [fake.word(ext_word_list=['urgent', 'important', 'update', 'review', 'policy'])],
-                "updated_date": fake.date_this_decade(),
-                "created_date": fake.date_this_decade(),
+                "updated_date": date_to_string(fake.date_this_decade()),
+                "created_date": date_to_string(fake.date_this_decade()),
                 "category": random.choice(categories),
                 "author": fake.name(),
                 "meta_data": fake.text(max_nb_chars=200),
