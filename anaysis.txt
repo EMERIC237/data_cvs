@@ -1,0 +1,48 @@
+Issue Documentation
+Title: Personalized Parameters Undefined on Subsequent Searches
+
+Description:
+When a user performs a search for the first time, personalized parameters such as Line of Business (LOB), COUNTRY, and taxonomy are successfully populated and displayed as expected. However, when the user returns to the home page and performs another search, these parameters appear as undefined, despite the network call returning these parameters correctly.
+
+Steps to Reproduce:
+
+Navigate to the home page of the application.
+Perform a search with personalized parameters (LOB, COUNTRY, taxonomy).
+Observe that the parameters are correctly populated and displayed.
+Return to the home page.
+Perform a second search.
+Observe that the parameters now appear as undefined.
+Expected Behavior:
+Personalized parameters should be consistently populated and displayed correctly for every search performed, regardless of how many times the user returns to the home page.
+
+Actual Behavior:
+Personalized parameters are correctly populated during the first search but appear as undefined on subsequent searches after returning to the home page.
+
+Network Call Observation:
+The network call that retrieves the personalized parameters returns the correct values every time, including during the subsequent searches when the parameters appear undefined.
+
+Impact:
+This issue affects the user experience by providing inconsistent search results and may lead to confusion and dissatisfaction among users.
+
+Possible Paths to Solve the Issue
+State Management Review:
+
+Verify State Persistence: Ensure that the state management system (e.g., Redux, Context API) maintains the state of personalized parameters correctly across navigations.
+Check Component Lifecycle: Investigate the component lifecycle methods to ensure that the parameters are being correctly set and reset when navigating back to the home page and performing a new search.
+Session Management:
+
+Session Storage: Utilize session storage or local storage to persist personalized parameters across different sessions and page reloads.
+Rehydration on Navigation: Implement logic to rehydrate the state from session or local storage when the user navigates back to the home page.
+API Call Timing:
+
+Ensure Synchronous State Updates: Verify that the state is being updated synchronously with the network call. Delayed or asynchronous state updates may cause the parameters to appear undefined.
+Check for Race Conditions: Ensure that there are no race conditions causing the state to be cleared or overwritten unexpectedly.
+Debugging and Logging:
+
+Add Detailed Logs: Implement detailed logging to track the flow of personalized parameters from the network call to the state and through to the UI components.
+Network Call Inspection: Use tools like Chrome DevTools to inspect the network calls and responses to ensure that the correct data is being received and processed.
+Component Re-rendering:
+
+Force Re-render: Ensure that the components displaying the personalized parameters are re-rendering correctly upon receiving new data.
+Dependency Arrays: Check the dependency arrays in useEffect hooks or similar mechanisms to ensure they are correctly triggering updates.
+By following these paths, you can systematically identify and resolve the issue with the personalized parameters being undefined on subsequent searches.
