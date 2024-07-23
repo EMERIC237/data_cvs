@@ -1,21 +1,21 @@
 let mode;
 
-// Matt Anderson
+// Define GCE3 object
 export const gce3 = {
   user: {},
   tabs: [],
   appTrayTabs: [],
   error: "GCE3 Debug",
   appTrayLobData: [],
-  protocol: (document.location.protocol.toLowerCase().includes("https")) ? "https://" : "http://",
+  protocol: document.location.protocol.toLowerCase().includes("https") ? "https://" : "http://",
   mode: mode || "dev",
   recentSearches: [],
   blockedExecutiveSIDs: [],
   foreseedIncludeURLs: [],
   foreseedFileLoadCheck: 0,
-  populateUser: function() { void 0; },
-
-  if (this.user.sid) parseCookie();
+  populateUser() {
+    if (this.user.sid) parseCookie();
+  }
 };
 
 // Ben Zethmayr
@@ -34,7 +34,7 @@ const getCookie = (cookieName) => {
     const valueEnd = cookieString.indexOf(';', valueStart);
     const cookieValue = cookieString.substring(valueStart, valueEnd);
 
-    return cookieValue.replace(searchValue, replaceValue);
+    return cookieValue; // Removed unnecessary replace call
   }
 
   return "";
@@ -71,7 +71,7 @@ const parseCookie = () => {
   };
 
   try {
-    gce3.sessCookie = getSessionCookie("s_pens");
+    gce3.sessCookie = getSessionCookie();
 
     const country = getCookie("otsi_Country3");
 
@@ -148,8 +148,8 @@ export const initializeGCE3 = (options) => {
     taxonomy: ""
   };
 
-  gce3.populateUser = () => {
-    if (!gce3.user.sid) parseCookie();
+  gce3.populateUser = function() {
+    if (!this.user.sid) parseCookie();
   };
 
   gce3.getCookie = getCookie;
