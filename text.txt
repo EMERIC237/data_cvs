@@ -135,3 +135,171 @@ private void deleteDraftDocument(IntranetEntry entry, KendraDocument kendra) {
         }
     }
 }
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+function (doc) {
+    var docId = doc.getFirstField("id");
+    if (docId != null) {
+        if (docId.value != null) {
+            var docIdValue = docId.value.toLowerCase();
+            if (docIdValue.indexOf("https://sites.jpmchase.com/sites/todayjpmc/pages/index.aspx#/profile/") !== -1) {
+                doc.addField("contentType_s", "news");
+            }
+        }
+    }
+    
+    doc.addField("section_ss", "");
+    doc.addField("site_ss", "");
+    doc.addField("collection_ss", "Global");
+    doc.addField("site_id", "sponlinepush");
+    doc.addField("_lw_data_source_s", "sponline");
+    doc.addField("hlsource_s", "esearch");
+    doc.addField("chorder_i", 1000);
+    
+    if (doc.hasField("site")) {
+        var site = doc.getFirstFieldValue("site");
+        if (site != null) {
+            doc.addField("site_lob_ss", "");
+            doc.addField("filetype_s", "HTML");
+            doc.addField("app_img_t", "html");
+            doc.addField("sitedata_s", site);
+            
+            if (doc.hasField("lob_ss")) {
+                var lob = doc.getFirstFieldValue("lob_ss");
+                var lobName = checkAndSetSiteForContent(doc, site.toLowerCase());
+                if (lobName != null && lobName !== "" && lobName.length > 1) {
+                    doc.setField("title_t", doc.getFirstFieldValue("title_t") + " -- " + "(" + lobName + ")");
+                    return doc;
+                }
+            }
+            if (docIdValue.indexOf("https://sites.jpmchase.com/sites/todayjpmc/pages/index.aspx#/template") !== -1) {
+                var lobName = docIdValue.substring(docIdValue.lastIndexOf("=") + 1, docIdValue.length);
+                if (lobName != null && lobName !== "" && lobName.length > 1) {
+                    doc.setField("title_t", doc.getFirstFieldValue("title_t") + " -- " + "(" + lobName + ")");
+                    doc.setField("lob_ss", lobName.replace("home", ""));
+                    return doc;
+                }
+            }
+        }
+    }
+    return doc;
+}
+
+function checkAndSetSiteForContent(doc, site) {
+    var lobName;
+    if (site.indexOf("cibhome") == 0) {
+        doc.setField("section_ss", "Corporate & Investment Banking");
+        doc.setField("site_ss", "Corporate & Investment Banking");
+        lobName = "Corporate & Investment Bank";
+        doc.setField("site_id", "O365_cib");
+        return lobName;
+    }
+    // Other conditions follow...
+    return null;
+}
+
+
+
+// translate to java 
+
+private void fieldMapping(IntranetEntry entry, KendraDocument kendra) {
+    KendraAttribute docId = entry.getFirstField("id");
+    if (docId != null && docId.getValue() != null) {
+        String docIdValue = docId.getValue().toLowerCase();
+        if (docIdValue.contains("https://sites.jpmchase.com/sites/todayjpmc/pages/index.aspx#/profile/")) {
+            kendra.addField("contentType_s", "news");
+        }
+    }
+
+    kendra.addField("section_ss", "");
+    kendra.addField("site_ss", "");
+    kendra.addField("collection_ss", "Global");
+    kendra.addField("site_id", "sponlinepush");
+    kendra.addField("_lw_data_source_s", "sponline");
+    kendra.addField("hlsource_s", "esearch");
+    kendra.addField("chorder_i", 1000);
+
+    if (entry.hasField("site")) {
+        String site = entry.getFirstFieldValue("site");
+        if (site != null) {
+            kendra.addField("site_lob_ss", "");
+            kendra.addField("filetype_s", "HTML");
+            kendra.addField("app_img_t", "html");
+            kendra.addField("sitedata_s", site);
+
+            if (entry.hasField("lob_ss")) {
+                String lob = entry.getFirstFieldValue("lob_ss");
+                String lobName = checkAndSetSiteForContent(kendra, site.toLowerCase());
+                if (lobName != null && !lobName.isEmpty() && lobName.length() > 1) {
+                    kendra.setField("title_t", entry.getFirstFieldValue("title_t") + " -- " + "(" + lobName + ")");
+                    return;
+                }
+            }
+            if (docIdValue.contains("https://sites.jpmchase.com/sites/todayjpmc/pages/index.aspx#/template")) {
+                String lobName = docIdValue.substring(docIdValue.lastIndexOf("=") + 1);
+                if (lobName != null && !lobName.isEmpty() && lobName.length() > 1) {
+                    kendra.setField("title_t", entry.getFirstFieldValue("title_t") + " -- " + "(" + lobName + ")");
+                    kendra.setField("lob_ss", lobName.replace("home", ""));
+                    return;
+                }
+            }
+        }
+    }
+}
+
+private String checkAndSetSiteForContent(KendraDocument kendra, String site) {
+    String lobName = null;
+    if (site.startsWith("cibhome")) {
+        kendra.setField("section_ss", "Corporate & Investment Banking");
+        kendra.setField("site_ss", "Corporate & Investment Banking");
+        lobName = "Corporate & Investment Bank";
+        kendra.setField("site_id", "O365_cib");
+        return lobName;
+    }
+    // Other conditions follow...
+    return lobName;
+}
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+function(doc) {
+    if (doc.getId() !== null) {
+        var fromField = "body_t";
+        var toField = "preview_t";
+        var value = doc.getFirstFieldValue(fromField);
+        if (value !== null) {
+            // value.replace(/[^\w\s]/gi, '');
+            // value.replace(/\r?\n|\r|\t/g, '');
+            var pattern = /\n|\t/g;
+            value = value.replace(pattern, '');
+            doc.setField("body_t", value);
+            var length = value.length < 150 ? value.length : 150;
+            value = value.substr(0, length);
+            doc.addField(toField, value);
+        }
+    }
+    return doc;
+}
+
+
+private void transformDocument(IntranetEntry entry, KendraDocument kendra) {
+    if (entry.getId() != null) {
+        String fromField = "body_t";
+        String toField = "preview_t";
+        String value = entry.getFirstFieldValue(fromField);
+        if (value != null) {
+            // value = value.replaceAll("[^\\w\\s]", "");
+            // value = value.replaceAll("\\r?\\n|\\r|\\t", "");
+            String pattern = "\\n|\\t";
+            value = value.replaceAll(pattern, "");
+            kendra.setField("body_t", value);
+            int length = value.length() < 150 ? value.length() : 150;
+            value = value.substring(0, length);
+            kendra.addField(toField, value);
+        }
+    }
+}
+
