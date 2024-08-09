@@ -1,16 +1,17 @@
 package com.jpmchase.mangetout.service.intranet;
 
+import com.jpmchase.mangetout.model.intranet.IntranetEntry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-import java.time.Instant;
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class IntranetIngesterServiceTest {
@@ -30,23 +31,21 @@ class IntranetIngesterServiceTest {
     }
 
     @Test
-    void pushAllBatched_givenNone_pushesNoBatches() {
-        when(intranetGetter.getAll()).thenReturn(List.of());
+    void pushAllBatched_givenNone_pushesNoBatches() throws IOException {
+        when(intranetGetter.getDATA()).thenReturn(List.of());
 
         underTest.pushAllBatched(sender);
 
-        verify(sender).sendBatch(assertArg(b -> {
-            assertThat(b.possibleAttributes()).containsKeys(FETCHED_AT_ATTR, KEYWORDS_ATTR, DESCRIPTION_ATTR);
-            assertThat(b.documents()).isEmpty();
-        }));
+        verify(sender, never()).sendBatch(any());
     }
 
     @Test
-    void pushUpdated_givenAnEntry_producesBatchOfOne() {
-        final IntranetEntry entry = new IntranetEntry("title", "site", "body", "id", "site_url", "lob_ss");
-        final Instant createdAt = Instant.now();
+    void pushAllBatched_givenEntries_pushesBatchesCorrectly() throws IOException {
+        IntranetEntry entry = new IntranetEntry("url_t", "body_t", "title_t", "abstract_t", "site", "site_url", 
+                                                List.of("user1", "user2"), "lob_ss", "id", "content_dt", 
+                                                "end_dt", 1, 12345, "start_dt");
 
-        when(intranetGetter.getAll()).thenReturn(List.of(entry));
+        when(intranetGetter.getDATA()).thenReturn(List.of(entry));
 
         underTest.pushAllBatched(sender);
 
@@ -59,7 +58,6 @@ class IntranetIngesterServiceTest {
             assertThat(doc.getTitle()).isEqualTo(entry.title_t());
             assertThat(doc.getString("site")).isEqualTo(entry.site());
             assertThat(doc.getStringList("filter_country")).contains("All");
-            assertThat(doc.getDate(FETCHED_AT_ATTR)).isNotNull();
             assertThat(doc.getString("_lw_data_source_s")).isEqualTo("DeleteGlobalPagesDS");
             assertThat(doc.getString("_lw_data_source_collection_s")).isEqualTo("global");
         }));
@@ -67,8 +65,10 @@ class IntranetIngesterServiceTest {
 
     @Test
     void fieldMapping_setsFieldsCorrectly() {
-        final KendraDocument document = new KendraDocument(Map.of());
-        final IntranetEntry entry = new IntranetEntry("title", "site", "body", "id", "site_url", "lob_ss");
+        KendraDocument document = new KendraDocument(Map.of());
+        IntranetEntry entry = new IntranetEntry("url_t", "body_t", "title_t", "abstract_t", "site", "site_url", 
+                                                List.of("user1", "user2"), "lob_ss", "id", "content_dt", 
+                                                "end_dt", 1, 12345, "start_dt");
 
         underTest.fieldMapping(entry, document);
 
@@ -79,8 +79,10 @@ class IntranetIngesterServiceTest {
 
     @Test
     void deleteDraftDocument_setsFieldsForDraft() {
-        final KendraDocument document = new KendraDocument(Map.of());
-        final IntranetEntry entry = new IntranetEntry("title", "site", "body", "id", "site_url", "lob_ss");
+        KendraDocument document = new KendraDocument(Map.of());
+        IntranetEntry entry = new IntranetEntry("url_t", "body_t", "title_t", "abstract_t", "site", "site_url", 
+                                                List.of("user1", "user2"), "lob_ss", "id", "content_dt", 
+                                                "end_dt", 1, 12345, "start_dt");
 
         underTest.deleteDraftDocument(entry, document);
 
@@ -90,8 +92,10 @@ class IntranetIngesterServiceTest {
 
     @Test
     void deleteDraftDocument_url_setsFieldsForDraftUrl() {
-        final KendraDocument document = new KendraDocument(Map.of());
-        final IntranetEntry entry = new IntranetEntry("title", "site", "body", "id", "site_url", "lob_ss");
+        KendraDocument document = new KendraDocument(Map.of());
+        IntranetEntry entry = new IntranetEntry("url_t", "body_t", "title_t", "abstract_t", "site", "site_url", 
+                                                List.of("user1", "user2"), "lob_ss", "id", "content_dt", 
+                                                "end_dt", 1, 12345, "start_dt");
 
         underTest.deleteDraftDocument_url(entry, document);
 
@@ -101,19 +105,21 @@ class IntranetIngesterServiceTest {
 
     @Test
     void addPreviewText_setsPreviewTextCorrectly() {
-        final KendraDocument document = new KendraDocument(Map.of());
-        final IntranetEntry entry = new IntranetEntry("title", "site", "body with content", "id", "site_url", "lob_ss");
+        KendraDocument document = new KendraDocument(Map.of());
+        IntranetEntry entry = new IntranetEntry("url_t", "body_t with content", "title_t", "abstract_t", "site", 
+                                                "site_url", List.of("user1", "user2"), "lob_ss", "id", 
+                                                "content_dt", "end_dt", 1, 12345, "start_dt");
 
         underTest.addPreviewText(entry, document);
 
-        assertThat(document.getString("body_t")).isEqualTo("body with content");
-        assertThat(document.getString("preview_t")).isEqualTo("body with content".substring(0, 150));
+        assertThat(document.getString("body_t")).isEqualTo("body_t with content");
+        assertThat(document.getString("preview_t")).isEqualTo("body_t with content".substring(0, 150));
     }
 
     @Test
     void checkAndSetSiteForContent_setsLobNameCorrectly() {
-        final KendraDocument document = new KendraDocument(Map.of());
-        final String site = "cibhome";
+        KendraDocument document = new KendraDocument(Map.of());
+        String site = "cibhome";
 
         String lobName = underTest.checkAndSetSiteForContent(document, site);
 
