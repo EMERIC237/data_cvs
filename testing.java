@@ -75,6 +75,8 @@ class IntranetIngesterServiceTest {
         assertThat(document.getTitle()).isEqualTo(entry.title_t());
         assertThat(document.getString("site")).isEqualTo(entry.site());
         assertThat(document.getStringList("filter_country")).contains("All");
+        // New checks for attributes declared in ApplicationJsonConstants
+        assertThat(document.getAttribute("SITE")).isEqualTo(attributeWith(SITE, entry.site()));
     }
 
     @Test
@@ -114,6 +116,8 @@ class IntranetIngesterServiceTest {
 
         assertThat(document.getString("body_t")).isEqualTo("body_t with content");
         assertThat(document.getString("preview_t")).isEqualTo("body_t with content".substring(0, 150));
+        // New check for attribute from ApplicationJsonConstants
+        assertThat(document.getAttribute("PREVIEW_TEXT")).isEqualTo(attributeWith(PREVIEW_TEXT, entry.body_t().substring(0, 150)));
     }
 
     @Test
@@ -124,6 +128,8 @@ class IntranetIngesterServiceTest {
         String lobName = underTest.checkAndSetSiteForContent(document, site);
 
         assertThat(lobName).isEqualTo("Corporate & Investment Bank");
-        assertThat(document.getString("site_id")).isEqualTo("O365_cib");
+        assertThat(document.getString("site_ss")).isEqualTo("Corporate & Investment Bank");
+        assertThat(document.getString("site")).isEqualTo("O365_cib");
+        assertThat(document.getAttribute("SITE_ID")).isEqualTo(attributeWith(SITE_ID, "O365_cib"));
     }
 }
