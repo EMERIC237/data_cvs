@@ -132,4 +132,96 @@ class IntranetIngesterServiceTest {
         assertThat(document.getString("site")).isEqualTo("O365_cib");
         assertThat(document.getAttribute("SITE_ID")).isEqualTo(attributeWith(SITE_ID, "O365_cib"));
     }
+
+
+
+    @Test
+    void setSiteLevelAttributes_setsContentTypeAndTitleCorrectly() {
+        // Arrange
+        KendraDocument document = underTest.createDocument();
+        IntranetEntry entry = new IntranetEntry(
+            "https://sites.jpmchase.com/sites/todayjpmc/pages/index.aspx#/profile/somepage",
+            "body_t content",
+            "title_t",
+            "abstract_t",
+            "site",
+            "site_url",
+            List.of("user1", "user2"),
+            "lob_ss",
+            "id",
+            "content_dt",
+            "end_dt",
+            1,
+            12345,
+            "start_dt"
+        );
+
+        // Act
+        underTest.setSiteLevelAttributes(entry, document);
+
+        // Assert
+        assertThat(document.getString("contentType_s")).isEqualTo("news");
+        assertThat(document.getAttribute(CONTENT_TYPE).getValue()).isEqualTo("news");
+    }
+
+    @Test
+    void setSiteLevelAttributes_setsLobNameAndTitleCorrectly() {
+        // Arrange
+        KendraDocument document = underTest.createDocument();
+        IntranetEntry entry = new IntranetEntry(
+            "docIdValue",
+            "body_t content",
+            "title_t",
+            "abstract_t",
+            "site",
+            "site_url",
+            List.of("user1", "user2"),
+            "lob_ss",
+            "id",
+            "content_dt",
+            "end_dt",
+            1,
+            12345,
+            "start_dt"
+        );
+
+        // Act
+        underTest.setSiteLevelAttributes(entry, document);
+
+        // Assert
+        String lobName = underTest.checkAndSetSiteForContent(document, "cohohome");
+        assertThat(document.getTitle()).isEqualTo("title_t -- (The Firm)");
+        assertThat(document.getStringList("LOBS")).contains("Company Home");
+    }
+
+    @Test
+    void setSiteLevelAttributes_setsSiteAndFileTypeCorrectly() {
+        // Arrange
+        KendraDocument document = underTest.createDocument();
+        IntranetEntry entry = new IntranetEntry(
+            "docIdValue",
+            "body_t content",
+            "title_t",
+            "abstract_t",
+            "rmhome",
+            "site_url",
+            List.of("user1", "user2"),
+            "lob_ss",
+            "id",
+            "content_dt",
+            "end_dt",
+            1,
+            12345,
+            "start_dt"
+        );
+
+        // Act
+        underTest.setSiteLevelAttributes(entry, document);
+
+        // Assert
+        assertThat(document.getAttribute(FILE_TYPE_ATTR).getValue()).isEqualTo("HTML");
+        assertThat(document.getAttribute(SITE_DATA).getValue()).isEqualTo("site");
+    }
 }
+
+
