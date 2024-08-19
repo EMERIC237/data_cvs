@@ -1,0 +1,100 @@
+Certainly! Below is a structured summary of all the proposed solutions to address the problem you are encountering with the Go-Link Metrics service and Prometheus integration. I will also create a document file for you to share with a professional developer.
+
+Summary of Proposed Solutions
+1. Verify Splunk Query Consistency
+Explanation:
+Ensure that the Splunk query used in the Go-Link Metrics service is identical to the one used manually. Any slight difference could result in varying counts.
+Make sure that the time window for querying Splunk in Go-Link Metrics is correctly set to match the 30-day window used in Prometheus.
+Implementation:
+Review and compare the Splunk query in the Go-Link Metrics code against the manually executed query.
+Adjust the query if any discrepancies are found to ensure consistency.
+2. Check Prometheus Query Configuration
+Explanation:
+Validate the Prometheus query used (increase(golink_redirect_hit_awsconsole_total[30d])) to ensure it accurately reflects the data collected from Splunk. Consider whether this query is appropriate for the data type being handled.
+If the data retrieved from Splunk is not a counter, but an aggregated count, consider using a gauge metric or directly querying the stored value.
+Implementation:
+Test the Prometheus query with different time windows to ensure accuracy.
+Adjust the query logic or metric type in Prometheus if the current setup is not appropriate for the data format.
+3. Inspect and Adjust Go-Link Metrics Data Processing
+Explanation:
+Review the data aggregation and processing logic within the Go-Link Metrics service to ensure it correctly handles and forwards the data retrieved from Splunk to Prometheus.
+Check for any potential data transformations or errors that could result in discrepancies between Splunk and Prometheus values.
+Implementation:
+Debug and log data processing steps within Go-Link Metrics, especially during the transformation and forwarding of data to Prometheus.
+Adjust the processing logic if any inconsistencies are found.
+4. UTF-8 Validation in ScalarMetric Class
+Explanation:
+Validate UTF-8 encoding within the ScalarMetric class to ensure that all metric keys and short keys are properly encoded right from the point of creation. This prevents any invalid characters from propagating through the system.
+Implementation:
+Add a validateUtf8 method in the ScalarMetric class and use it to validate the shortKey and metricKey after sanitization.
+Code Implementation:
+java
+Copy code
+private String validateUtf8(String value) {
+    if (value == null) {
+        return null;
+    }
+    byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+    return new String(bytes, StandardCharsets.UTF_8);
+}
+
+public void setMetricKey(String metricKey) {
+    this.metricKey = validateUtf8(metricKey.replaceAll("[\\-.*~@!$=]", SANITIZED_CHARACTER));
+}
+
+public void setShortKey(String shortKey) {
+    this.shortKey = validateUtf8(shortKey);
+}
+5. UTF-8 Validation in MetricsController Class
+Explanation:
+Perform a final UTF-8 validation in the MetricsController before exposing data to Prometheus. This acts as a safeguard to ensure that all data being exposed is valid UTF-8.
+Implementation:
+Add a validateUtf8 method in the MetricsController class and apply it to all metric-related strings just before writing the response to Prometheus.
+Code Implementation:
+java
+Copy code
+private String validateUtf8(String value) {
+    if (value == null) {
+        return null;
+    }
+    byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+    return new String(bytes, StandardCharsets.UTF_8);
+}
+
+@GetMapping(value = "/metrics")
+public void getMetrics(HttpServletResponse response) throws IOException {
+    response.setContentType(MediaType.TEXT_PLAIN.toString());
+
+    StringBuilder metricsBuilder = new StringBuilder();
+
+    for (ScalarMetric sm : metricsRepository.getAll()) {
+        String metricKey = validateUtf8(sm.getMetricKey());
+        String shortKey = validateUtf8(sm.getShortKey());
+
+        String scalarEntry = String.format(
+            HELP_TEXT + TYPE_TEXT + METRIC_TEXT,
+            metricKey, metricKey, metricKey, shortKey, sm.getCount()
+        );
+        metricsBuilder.append(scalarEntry);
+    }
+
+    writeResponse(response, metricsBuilder.toString());
+}
+6. Sanitize Input Strings and Correct Regex in ScalarMetric Class
+Explanation:
+Ensure that all metric keys are properly sanitized to remove or replace problematic characters. Adjust the regex used for sanitization to only replace specific characters instead of broadly replacing all non-whitespace characters.
+Implementation:
+Update the sanitization regex in the ScalarMetric class to target specific characters.
+Code Implementation:
+java
+Copy code
+static final String CHARACTERS_TO_SANITIZE = "-.*~@!$=";
+static final String SANITIZED_CHARACTER = "_";
+
+public void setMetricKey(String metricKey) {
+    this.metricKey = validateUtf8(metricKey.replaceAll("[\\-.*~@!$=]", SANITIZED_CHARACTER));
+}
+Next Steps:
+Review the document for completeness.
+Implement the proposed solutions in the order listed.
+Monitor the results after each change to ensure that the issue is resolved.
