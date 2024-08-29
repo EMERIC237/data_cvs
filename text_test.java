@@ -17,17 +17,66 @@ class PolicyIngesterServiceTest {
 
     @Autowired
     private PolicyIngesterService underTest;
+      private GcrmEntry entry;
+
+    @BeforeEach
+    void setUp() {
+        entry = new GcrmEntry(
+            List.of("definedTerm1", "definedTerm2"),
+            "subLOBValue",
+            "prevDocVSID",
+            "workflowStatus",
+            "managerSid",
+            "effectiveDate",
+            "changeDate",
+            "lobHierarchyValue",
+            "docTitleValue",
+            "summaryValue",
+            "filterCountry",
+            "boostdocsValue",
+            "countryValue",
+            new Date(),
+            "publishedVersionSeriesIdValue",
+            "docIdValue",
+            "modifiedOnValue",
+            "mimeTypeValue"
+        );
+    }
 
     @Test
-    void generateDocumentId_setsDocumentIdCorrectly() {
-        GcrmEntry entry = new GcrmEntry();
-        entry.setPublishedVersionSeriesId("someDocumentId");
+void pushAllBatched_givenEntries_pushesBatchesCorrectly() throws IOException {
+    setupGetAllEmits(entry);
 
-        KendraDocument document = underTest.createDocument();
-        underTest.generateDocumentId(entry, document);
+    underTest.pushAllBatched(sender);
 
-        assertThat(document.getId()).isEqualTo("https://spp.gaiacloud.jpmchase.net/#/results?docId=someDocumentId&page=griddocument");
-    }
+    verify(sender).sendBatch(assertArg(b -> {
+        assertThat(b.possibleAttributes()).containsKeys(
+            FETCHED_AT_ATTR, KEYWORDS_ATTR, DESCRIPTION_ATTR, 
+            ApplicationJsonConstants.SITES_ATTR, 
+            ApplicationJsonConstants.SECTIONS_ATTR, 
+            ApplicationJsonConstants.SITE_EXTERNAL_ID_ATTR
+        );
+        assertThat(b.documents()).hasSize(1);
+
+        final KendraDocument doc = b.documents().get(0);
+        assertThat(doc.getTitle()).isEqualTo(entry.docTitle());
+        assertThat(doc.getString(SITE_EXTERNAL_ID_ATTR)).isEqualTo("gcrm");
+        assertThat(doc.getStringList(SITES_ATTR)).contains("Corporate & Investment Banking");
+    }));
+}
+
+    @Test
+void generateDocumentId_setsDocumentIdCorrectly() {
+    KendraDocument document = underTest.createDocument();
+
+    underTest.generateDocumentId(entry, document);
+
+    String expectedUrl = "https://spp.gaiacloud.jpmchase.net/#/results?docId=" + 
+                          URLEncoder.encode(entry.docId().toLowerCase(), StandardCharsets.UTF_8) +
+                          "&page=griddocument";
+    assertThat(document.getId()).isEqualTo(expectedUrl);
+}
+
 
     @Test
     void setSiteLevelAttributes_setsAttributesCorrectly() {
@@ -40,43 +89,59 @@ class PolicyIngesterServiceTest {
         assertThat(document.getString(SITE_EXTERNAL_ID_ATTR)).isEqualTo("gcrm");
     }
 
-    @Test
-    void fieldMapping_setsFieldsCorrectly() {
-        GcrmEntry entry = new GcrmEntry();
-        entry.setDocTitle("Policy Title");
-        entry.setSummary("This is the policy summary.");
+  @Test
+void fieldMapping_setsFieldsCorrectly() {
+    KendraDocument document = underTest.createDocument();
 
-        KendraDocument document = underTest.createDocument();
+    underTest.fieldMapping(entry, document);
 
-        underTest.fieldMapping(entry, document);
+    assertThat(document.getTitle()).isEqualTo(entry.docTitle());
+    assertThat(document.getString(DOCUMENT_BODY_ATTR)).isEqualTo(entry.summary());
+}
 
-        assertThat(document.getTitle()).isEqualTo("Policy Title");
-        assertThat(document.getString(DOCUMENT_BODY_ATTR)).isEqualTo("This is the policy summary.");
-    }
+
 
     @Test
-    void keywordsBoosting_setsKeywordsCorrectly() {
-        GcrmEntry entry = new GcrmEntry();
-        entry.setDocId("12345");
+void keywordsBoosting_setsCorrectKeywords() {
+    KendraDocument document = underTest.createDocument();
 
-        KendraDocument document = underTest.createDocument();
+    underTest.keywordsBoosting(entry, document);
 
-        underTest.keywordsBoosting(entry, document);
+    assertThat(document.getString(KEYWORDS_ATTR)).isEqualTo("policies");
+}
 
-        assertThat(document.getString(KEYWORDS_ATTR)).isEqualTo("policies");
-    }
 
-    @Test
-    void addBodyIfTitleMissing_setsTitleFromBody() {
-        GcrmEntry entry = new GcrmEntry();
-        entry.setSummary("First line of the summary.\nThis is the rest of the summary.");
+   @Test
+void addBodyIfTitleMissing_addsBodyWhenTitleIsMissing() {
+    KendraDocument document = underTest.createDocument();
 
-        KendraDocument document = underTest.createDocument();
+    // Simulate a missing title in the entry
+    GcrmEntry entryWithoutTitle = new GcrmEntry(
+        entry.definedTerms(),
+        entry.subLOB(),
+        entry.immediatePrevDocVSID(),
+        entry.workflowStatus(),
+        entry.docManagerSid(),
+        entry.initialEffectiveDate(),
+        entry.statusChangeDate(),
+        entry.lobHierarchy(),
+        null, // docTitle is missing
+        entry.summary(),
+        entry.filter_country(),
+        entry.boostdocs(),
+        entry.country(),
+        entry.publishedDate(),
+        entry.publishedVersionSeriesId(),
+        entry.docId(),
+        entry.modifiedOn(),
+        entry.mimeType()
+    );
 
-        underTest.addBodyIfTitleMissing(entry, document);
+    underTest.addBodyIfTitleMissing(entryWithoutTitle, document);
 
-        assertThat(document.getTitle()).isEqualTo("First line of the summary.");
-    }
+    assertThat(document.getTitle()).isEqualTo("summaryValue".substring(0, Math.min("summaryValue".length(), 50)));
+}
+
 
     @Test
     void entryForPolicy_generatesCorrectDocument() {
