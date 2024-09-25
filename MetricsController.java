@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 @RestController
 public class MetricsController {
@@ -33,49 +32,22 @@ public class MetricsController {
         }
 
         metricsRepository.getAll().forEach(sm -> {
-            String sanitizedMetricKey = validateAndSanitizeUtf8(sm.getMetricKey());
-            String sanitizedShortKey = validateAndSanitizeUtf8(sm.getShortKey());
+            // ScalarMetric class handles sanitization internally
+            String metricKey = sm.getMetricKey();
+            String shortKey = sm.getShortKey();
 
             String scalarEntry = String.format(
                     HELP_TEXT + TYPE_TEXT + METRIC_TEXT,
-                    sanitizedMetricKey, sanitizedMetricKey, sanitizedMetricKey, sanitizedShortKey, sm.getCount());
+                    metricKey, metricKey, metricKey, shortKey, sm.getCount());
 
-            logger.info("Processed sanitized metric: Short Key: {}, Metric Key: {}", sanitizedShortKey, sanitizedMetricKey);
+            logger.info("Processed metric: Short Key: {}, Metric Key: {}", shortKey, metricKey);
             writeResponse(response, scalarEntry);
         });
     }
 
-    // Step 1: Sanitization and UTF-8 validation logic
-    private String sanitizeString(String input) {
-        if (input == null || input.isEmpty()) {
-            return input;
-        }
-
-        // Replace all non-alphanumeric characters and special characters with underscores
-        return Normalizer.normalize(input, Normalizer.Form.NFD)
-                         .replaceAll("[^\\p{ASCII}]", "_"); // Replace all non-ASCII characters
-    }
-
-    // Step 2: Complete UTF-8 validation
-    private String validateAndSanitizeUtf8(String value) {
-        if (value == null) {
-            return null;
-        }
-
-        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-
-        // Check if the string is a valid UTF-8 string
-        if (!StandardCharsets.UTF_8.newDecoder().canDecode(java.nio.ByteBuffer.wrap(bytes))) {
-            throw new IllegalArgumentException("Invalid UTF-8 string");
-        }
-
-        // Apply sanitization logic to clean up unwanted characters
-        return sanitizeString(new String(bytes, StandardCharsets.UTF_8));
-    }
-
     private void writeResponse(HttpServletResponse response, String message) {
         try {
-            response.getOutputStream().write(message.getBytes(StandardCharsets.UTF_8));
+            response.getOutputStream().write(message.getBytes());
             response.flushBuffer();
         } catch (IOException e) {
             logger.warn("Buffer error: {}", e.getMessage());
