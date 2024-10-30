@@ -1,0 +1,85 @@
+Overview
+This document outlines our team’s standardized release process, addressing common issues such as miscommunication, delayed releases, confusion over release content, and release criteria. By following this strategy, we aim to improve team communication, align with Agile best practices, and ensure predictable, high-quality releases.
+
+Release Process Strategy
+Our release process is built around the following principles:
+
+Scheduled, Predictable Release Dates
+We will release updates on a fixed schedule, ideally once a month (e.g., the last Friday of each month). This enables the team and stakeholders to anticipate changes, review updates, and provide timely feedback.
+
+Emergency Release Procedure
+When critical fixes are needed before the next scheduled release, an emergency release protocol will be followed (detailed below). This protocol ensures that urgent fixes are deployed quickly while minimizing disruptions to our standard schedule.
+
+Readiness Requirements
+A change will only be scheduled for release if:
+
+The code has been fully tested and passed all quality checks.
+Code reviews have been completed and approved.
+The change has been merged into the main branch.
+Dedicated Release Documentation
+Each release will have a Confluence page detailing:
+
+Change owner(s)
+Release manager
+Meeting links (if necessary)
+List of changes included in the release (with statuses and additional comments)
+Rules for the Release Process
+Release Schedule: All team members must adhere to the release schedule. If a feature is not ready, it will be deferred to the next release.
+Emergency Releases: These will be limited to urgent issues that impact customer experience or core functionality. They require approval from the release manager and change owner.
+Release Eligibility: Only fully tested, reviewed, and merged code is eligible for the release. Code that does not meet these criteria must wait until it does.
+Release Process: Step-by-Step Guide
+1. Planning Phase (1–2 weeks before release):
+
+Finalize Changes: All team members finalize changes they intend to include in the release.
+Release Page Creation: The release manager creates a Confluence page for the upcoming release.
+Documentation on the Release Page:
+List of included changes and their owners
+Assigned release manager
+Expected release date and time
+Meeting link (if necessary for final review)
+Any specific release notes or concerns
+2. Code Freeze (1 week before release):
+
+All code changes for the release must be merged.
+Final code testing begins.
+Release notes are reviewed and updated as necessary.
+3. Release Day:
+
+Pre-release Meeting (optional): Quick team sync to discuss last-minute details or confirm readiness.
+Release Execution: The release manager oversees the deployment process. The status is updated on Confluence.
+Post-release Validation: QA or team members verify that the release was successful and that no immediate issues are present.
+4. Post-release Documentation:
+
+The release page is updated with final notes, including any post-release feedback or issues encountered.
+A retrospective is held to discuss what went well and areas for improvement.
+Emergency Release Protocol
+For emergency releases, the following steps apply:
+
+Approval: The change owner consults with the release manager to gain approval.
+Documentation: The emergency release is documented on a separate Confluence page, following the same structure as a standard release.
+Release Execution: The release manager deploys the change as soon as practical.
+Post-Release Follow-Up: Emergency releases are reviewed during the next team meeting to ensure all team members understand the impact and any adjustments needed.
+Examples and Best Practices
+Example Release Page Layout:
+Release Version: v1.2.0
+Release Date: Oct 31, 2024
+Release Manager: [Name]
+Meeting Link: [Zoom/Teams link]
+Changes Included:
+Change #1: Feature X (Owner: John Doe)
+Change #2: Bug Fix Y (Owner: Jane Smith)
+Change #3: UI Improvement Z (Owner: Alex Brown)
+Best Practices:
+Regular Communication: Provide consistent updates on the release page and Slack/Teams to keep everyone informed.
+Release Reviews: Schedule quick, recurring reviews of the release schedule and process for continuous improvement.
+Clear Ownership: Every change should have an assigned owner, ensuring accountability.
+
+
+Next Steps & Moving Forward
+To implement and refine this process:
+
+Team Alignment: Review this process with the team for feedback and approval.
+Release Calendar Creation: Develop a shared release calendar to outline scheduled release dates, key deadlines (e.g., code freeze, final testing), and emergency release windows. This calendar will be regularly updated and accessible to all team members to improve visibility and planning.
+Documentation Practice: Begin creating dedicated Confluence pages for each release starting next month.
+Agile Release Training: Consider Agile training sessions on release planning and execution for best practices.
+This Confluence page and release calendar will be living documents, updated regularly as our process evolves and team feedback is incorporated.
